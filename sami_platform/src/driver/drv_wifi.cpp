@@ -1,0 +1,27 @@
+#include <ESP8266WiFi.h>
+#include <Arduino.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "drv_wifi.h"
+
+void drv_wifi_init(const char* ssid, const char* password) {
+    Serial.print("Conectando ao Wi-Fi: ");
+    Serial.println(ssid);
+    
+    WiFi.begin(ssid, password);
+    
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    
+    Serial.println("");
+    Serial.println("Wi-Fi Conectado com sucesso!");
+    Serial.print("Endereço IP recebido: ");
+    Serial.println(WiFi.localIP());
+}
+
+bool drv_wifi_is_connected() {
+    return (WiFi.status() == WL_CONNECTED);
+}
