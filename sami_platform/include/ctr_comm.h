@@ -5,6 +5,8 @@
 
 void ctr_comm_init(void);
 
-bool ctr_comm_send_data(box_compartment_t compartment, bool compartment_open);
+bool ctr_comm_send_data(box_compartment_t compartment, bool compartment_open) ;
+
+bool ctr_comm_send_alert(box_compartment_t compartment, int alert_code);
 
 #endif

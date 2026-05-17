@@ -21,6 +21,6 @@ void app_sami_init (void)
     app_monitor_init();
 
     Serial.println("");
-    Serial.println("Placa inicializada com sucesso!");
+    Serial.println("\nPlaca inicializada com sucesso!");
 
 }

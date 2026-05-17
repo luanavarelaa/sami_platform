@@ -7,10 +7,7 @@ typedef enum
 	GPIO_BUTTON_1,
 	GPIO_GREEN_LED_1,
 	GPIO_RED_LED_1,
-	GPIO_BUTTON_2,
-	GPIO_GREEN_LED_2,
-	GPIO_RED_LED_2
-
+	GPIO_YELLOW_LED
 } gpio_name_t;
 
 void drv_gpio_out_config(gpio_name_t pin);

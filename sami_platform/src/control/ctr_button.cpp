@@ -5,49 +5,55 @@
 #include "drv_gpio.h"
 #include "sami_types.h"
 
+#define DEBOUNCE_DELAY_MS 20
+
+typedef struct 
+{
+    bool debounced_state;
+    bool last_reading;
+    unsigned long last_change_time;
+} button_state_t;
+
+static button_state_t btn_states[4];
+
 void ctr_button_init(void)
 {
-  drv_gpio_in_config (GPIO_BUTTON_1);
-  drv_gpio_in_config (GPIO_BUTTON_2);
+    drv_gpio_in_config(GPIO_BUTTON_1);
+
+    for (int i = 0; i < 4; i++) 
+    {
+        btn_states[i].debounced_state = false;
+        btn_states[i].last_reading = false;
+        btn_states[i].last_change_time = 0;
+    }
 }
 
 bool ctr_check_compartment_is_open(box_compartment_t compartment)
 {
+    bool current_reading = false;
+    int idx = (int)compartment;
+
     switch (compartment)
     {
-    case COMPARTMENT_1:
-        if (drv_gpio_get_state_pin(GPIO_BUTTON_1) == OPEN)
-        {
-            drv_gpio_set_pin(GPIO_GREEN_LED_1);
-            drv_gpio_clear_pin(GPIO_RED_LED_1);
-            return true;
-        }
-        else
-        {
-            drv_gpio_set_pin(GPIO_RED_LED_1);
-            drv_gpio_clear_pin(GPIO_GREEN_LED_1);
-            return false;
-        }
-        break;
-    
-    case COMPARTMENT_2:
-        if (drv_gpio_get_state_pin(GPIO_BUTTON_2) == OPEN)
-        {
-            drv_gpio_set_pin(GPIO_GREEN_LED_2);
-            drv_gpio_clear_pin(GPIO_RED_LED_2);
-            return true;
-        }
-        else
-        {
-            drv_gpio_set_pin(GPIO_RED_LED_2);
-            drv_gpio_clear_pin(GPIO_GREEN_LED_2);
-            return false;
-        }
-        break;
-    
-    default:
-        break;
-    }
-    return false;
-}
+        case COMPARTMENT_1:
+            current_reading = (drv_gpio_get_state_pin(GPIO_BUTTON_1) == OPEN);
+            break;
 
+        default:
+            return false;
+    }
+
+    if (current_reading != btn_states[idx].last_reading) 
+    {
+        btn_states[idx].last_change_time = millis();
+    }
+
+    if ((millis() - btn_states[idx].last_change_time) > DEBOUNCE_DELAY_MS) 
+    {
+        btn_states[idx].debounced_state = current_reading;
+    }
+
+    btn_states[idx].last_reading = current_reading;
+
+    return btn_states[idx].debounced_state;
+}
