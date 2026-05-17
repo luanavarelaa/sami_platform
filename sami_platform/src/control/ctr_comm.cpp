@@ -6,28 +6,36 @@
 
 #include "ctr_comm.h"
 #include "drv_wifi.h" 
+#include "drv_gpio.h"
 #include "sami_types.h"
 
-const char* wifi_ssid = "S23deLuana";
-const char* wifi_pass = "docedeleite";
+const char* wifi_ssid = "MILLY";
+const char* wifi_pass = "#Milly2026#";
 const String token = "BBUS-vf6GrNx5DO6JkmhJdkz3Ub8IQsaDOx"; 
 
 void ctr_comm_init(void) 
 {
-    Serial.println("[COMM] Inicializando comunicações...");
+    Serial.println("\n[CTR_COMM] Inicializando comunicações...");
 
     drv_wifi_init(wifi_ssid, wifi_pass);
+    
+    if (drv_wifi_is_connected())
+    {
+        drv_gpio_set_pin(GPIO_YELLOW_LED);
+    }
 }
 
 bool ctr_comm_send_data(box_compartment_t compartment, bool compartment_open) 
 {
-    if (!drv_wifi_is_connected()) {
+    if (!drv_wifi_is_connected()) 
+    {
         return false; 
     }
 
     String variable_name;
     
-    switch (compartment) {
+    switch (compartment) 
+    {
 
         case COMPARTMENT_1: 
             variable_name = "compartment_1";
@@ -46,12 +54,13 @@ bool ctr_comm_send_data(box_compartment_t compartment, bool compartment_open)
             break;
 
         default:
-            Serial.println("[COMM] Error: Unknown compartment.");
+            Serial.println("\n[CTR_COMM] Error: Unknown compartment.");
             return false;
     }
 
     String payload;
-    if (compartment_open) {
+    if (compartment_open) 
+    {
         payload = "{\"" + variable_name + "\": 1}"; 
     } else {
         payload = "{\"" + variable_name + "\": 0}";
@@ -68,11 +77,37 @@ bool ctr_comm_send_data(box_compartment_t compartment, bool compartment_open)
     int httpCode = http.POST(payload); 
     http.end();
     
-    if (httpCode == 200 || httpCode == 201) {
-        Serial.println("[COMM] Success on Ubidots!");
+    if (httpCode == 200 || httpCode == 201) 
+    {
+        Serial.println("\n[CTR_COMM] Success on Ubidots!");
         return true;
     } else {
-        Serial.printf("[COMM] Ubidots Error: %d\n", httpCode);
+        Serial.printf("\n[CTR_COMM] Ubidots Error: %d\n", httpCode);
         return false;
     }
+}
+
+bool ctr_comm_send_alert(box_compartment_t compartment, int alert_code) 
+{
+    if (!drv_wifi_is_connected()) 
+    { 
+        return false; 
+    }
+
+    
+    String variable_name = "alert_status_" + String((int)compartment + 1);
+    String payload = "{\"" + variable_name + "\": " + String(alert_code) + "}";
+
+    WiFiClient client;
+    HTTPClient http;
+    String url = "http://industrial.api.ubidots.com/api/v1.6/devices/sami";
+    
+    http.begin(client, url);
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("X-Auth-Token", token);
+    
+    int httpCode = http.POST(payload); 
+    http.end();
+    
+    return (httpCode == 200 || httpCode == 201);
 }

@@ -3,14 +3,57 @@
 #include <stdint.h>
 
 #include "drv_gpio.h"
+#include "sami_types.h"
 
 void ctr_led_init(void)
 {
   drv_gpio_out_config( GPIO_BLUE_LED);
-  
+
   drv_gpio_out_config( GPIO_GREEN_LED_1);
   drv_gpio_out_config( GPIO_RED_LED_1);
 
-  drv_gpio_out_config(GPIO_GREEN_LED_2);
-  drv_gpio_out_config(GPIO_RED_LED_2);
+  drv_gpio_out_config(GPIO_YELLOW_LED);
+}
+
+
+void ctr_led_set_green(box_compartment_t compartment)
+{
+  switch (compartment)
+  {
+  case COMPARTMENT_1 :
+    drv_gpio_set_pin(GPIO_GREEN_LED_1);
+    drv_gpio_clear_pin(GPIO_RED_LED_1);
+    break;
+    
+  default:
+    break;
+  }
+}
+
+void ctr_led_set_red(box_compartment_t compartment)
+{
+  switch (compartment)
+  {
+  case COMPARTMENT_1 :
+    drv_gpio_set_pin(GPIO_RED_LED_1);
+    drv_gpio_clear_pin(GPIO_GREEN_LED_1);
+    break;
+
+  default:
+    break;
+  }
+}
+
+void ctr_clear_r_g_led(box_compartment_t compartment)
+{
+  switch (compartment)
+  {
+  case COMPARTMENT_1 :
+    drv_gpio_clear_pin(GPIO_RED_LED_1);
+    drv_gpio_clear_pin(GPIO_GREEN_LED_1);
+    break;
+
+  default:
+    break;
+  }
 }
