@@ -9,8 +9,8 @@
 #include "drv_gpio.h"
 #include "sami_types.h"
 
-const char* wifi_ssid = "iPhone de Camile";
-const char* wifi_pass = "123456789";
+const char* wifi_ssid = "MILLY";
+const char* wifi_pass = "#Milly2026#";
 const String token = "BBUS-vf6GrNx5DO6JkmhJdkz3Ub8IQsaDOx"; 
 
 void ctr_comm_init(void) 
