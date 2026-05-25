@@ -10,8 +10,8 @@ typedef enum
 
 typedef enum
 {
-    OPEN,
-    CLOSED
+    CLOSED,
+    OPEN
 }box_compartment_state_t;
 
 #endif /* SAMI_TYPES_H */

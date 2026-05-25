@@ -111,3 +111,32 @@ bool ctr_comm_send_alert(box_compartment_t compartment, int alert_code)
     
     return (httpCode == 200 || httpCode == 201);
 }
+
+float ctr_comm_get_config(box_compartment_t compartment, String type) 
+{
+    if (!drv_wifi_is_connected()) 
+    {
+        return -1.0;
+    }
+
+    WiFiClient client;
+    HTTPClient http;
+    
+    String variable_name = type + "_" + String((int)compartment + 1);
+    String url = "http://industrial.api.ubidots.com/api/v1.6/devices/sami/" + variable_name + "/lv";
+    
+    http.begin(client, url);
+    http.addHeader("X-Auth-Token", token);
+    
+    int httpCode = http.GET();
+    float value = -1.0;
+    
+    if (httpCode == 200) 
+    {
+        String response = http.getString();
+        value = response.toFloat();
+    }
+    
+    http.end();
+    return value;
+}
