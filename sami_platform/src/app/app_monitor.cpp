@@ -19,7 +19,7 @@
 // Sincroniza com a nuvem a cada 10 segundos para não travar a placa
 #define CLOUD_SYNC_INTERVAL_MS 10000 
 
-static unsigned long last_cloud_sync = 0;
+static unsigned long next_dose_time = 0;
 
 typedef struct 
 {
@@ -85,14 +85,22 @@ void app_monitor_init(void)
     Serial.println("[APP_MONITOR] Todos os compartimentos configurados via nuvem.");
 }
 
+void app_monitor_update_dose_time(box_compartment_t compartment, int total_minutes) 
+{
+    int horas = (total_minutes / 60) % 24; 
+    int minutos = total_minutes % 60;
+
+    // Transforma 14 horas e 30 minutos em 14.30
+    float hora_decimal = horas + (minutos / 100.0);
+
+    Serial.printf("[APP_MONITOR] Caixa %d -> Próxima dose reagendada para: %.2f\n", (int)compartment + 1, hora_decimal);
+
+    // Envia para a nuvem
+    ctr_comm_send_next_dose_time(compartment, hora_decimal);
+}
+
 void app_monitor_sync_cloud(box_compartment_t compartment)
 {
-    /*// Proteção de tempo para evitar estouro de requisições HTTP no Ubidots
-    if ((millis() - last_cloud_sync) < CLOUD_SYNC_INTERVAL_MS) {
-        return; 
-    }
-    last_cloud_sync = millis();*/
-
     compartment_monitor_t* box = NULL;
     switch (compartment) 
     {
@@ -110,6 +118,8 @@ void app_monitor_sync_cloud(box_compartment_t compartment)
     {
         box->is_active = true;
         box->next_dose_time = ctr_time_get_total_minutes(); // Primeira dose imediata ao ligar
+
+        app_monitor_update_dose_time(compartment, box->next_dose_time);
         
         box->early_alert_sent = false;
         box->exact_alert_sent = false;
@@ -141,6 +151,8 @@ void app_monitor_sync_cloud(box_compartment_t compartment)
                 int diferenca = cloud_interval_minutes - box->interval;
                 box->interval = cloud_interval_minutes;
                 box->next_dose_time += diferenca; 
+
+                app_monitor_update_dose_time(compartment, box->next_dose_time);
                 
                 // Reseta as flags de controle para o novo agendamento
                 box->early_alert_sent = false;
@@ -248,6 +260,8 @@ void app_monitor_check_box(box_compartment_t compartment)
                 app_monitor_evaluate_schedule(compartment, current_time);
                 
                 box->next_dose_time = current_time + box->interval;
+                app_monitor_update_dose_time(compartment, box->next_dose_time);
+
                 box->early_alert_sent = false;
                 box->exact_alert_sent = false;
                 box->late_alert_sent = false;

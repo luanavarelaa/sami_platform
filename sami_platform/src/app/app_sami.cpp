@@ -31,5 +31,5 @@ void app_sami_init (void)
 
 void app_sami_run(void)
 {
-    void app_monitor_task(void);
+    app_monitor_task();
 }

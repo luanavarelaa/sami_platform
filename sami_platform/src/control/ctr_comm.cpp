@@ -147,3 +147,26 @@ float ctr_comm_get_config(box_compartment_t compartment, String type)
     
     return value;
 }
+
+bool ctr_comm_send_next_dose_time(box_compartment_t compartment, float time_value) 
+{
+    if (!drv_wifi_is_connected()) return false; 
+
+    String variable_name = "time_dose_" + String((int)compartment + 1);
+    
+    // Envia o valor decimal diretamente
+    String payload = "{\"" + variable_name + "\": " + String(time_value) + "}";
+
+    WiFiClient client;
+    HTTPClient http;
+    String url = "http://industrial.api.ubidots.com/api/v1.6/devices/sami";
+    
+    http.begin(client, url);
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("X-Auth-Token", token);
+    
+    int httpCode = http.POST(payload); 
+    http.end();
+    
+    return (httpCode == 200 || httpCode == 201);
+}
