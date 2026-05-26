@@ -9,11 +9,11 @@
 #include "drv_gpio.h"
 #include "sami_types.h"
 
-const char* wifi_ssid = "MILLY";
-const char* wifi_pass = "#Milly2026#";
+const char* wifi_ssid = "S23deLuana";
+const char* wifi_pass = "docedeleite";
 const String token = "BBUS-vf6GrNx5DO6JkmhJdkz3Ub8IQsaDOx"; 
 
-void ctr_comm_init(void) 
+bool ctr_comm_init(void) 
 {
     Serial.println("\n[CTR_COMM] Inicializando comunicações...");
 
@@ -21,8 +21,10 @@ void ctr_comm_init(void)
     
     if (drv_wifi_is_connected())
     {
-        drv_gpio_set_pin(GPIO_YELLOW_LED);
+        return true;
     }
+
+    return false;
 }
 
 bool ctr_comm_send_data(box_compartment_t compartment, bool compartment_open) 
@@ -131,12 +133,17 @@ float ctr_comm_get_config(box_compartment_t compartment, String type)
     int httpCode = http.GET();
     float value = -1.0;
     
-    if (httpCode == 200) 
+    if (httpCode == 200 || httpCode == 201) 
     {
         String response = http.getString();
         value = response.toFloat();
     }
+    else 
+    {
+        Serial.printf("\n[CTR_COMM] Falha ao ler %s no Ubidots. Erro HTTP: %d\n", variable_name.c_str(), httpCode);
+    }
     
     http.end();
+    
     return value;
 }

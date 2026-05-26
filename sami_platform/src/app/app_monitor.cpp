@@ -16,6 +16,11 @@
 #define TOOK_ON_TIME        2
 #define NOT_TOOK_ON_TIME    3
 
+// Sincroniza com a nuvem a cada 10 segundos para não travar a placa
+#define CLOUD_SYNC_INTERVAL_MS 10000 
+
+static unsigned long last_cloud_sync = 0;
+
 typedef struct 
 {
     box_compartment_t id;
@@ -27,6 +32,7 @@ typedef struct
     bool late_alert_sent;
     bool message_pending;
     bool state_to_send;
+    bool is_active; // Controla se a caixa está ligada no Ubidots
 } compartment_monitor_t;
 
 static compartment_monitor_t compartment_1;
@@ -36,7 +42,6 @@ static compartment_monitor_t compartment_4;
 
 void app_monitor_init(void) 
 {
-    ctr_time_init();
     int current_time = ctr_time_get_total_minutes();
     
     compartment_monitor_t* boxes[4] = {&compartment_1, &compartment_2, &compartment_3, &compartment_4};
@@ -46,26 +51,26 @@ void app_monitor_init(void)
     {
         boxes[i]->id = ids[i];
         boxes[i]->previous_state = false;
+        boxes[i]->is_active = false; // Começa como desativada por segurança até ler o Ubidots
 
         float cloud_interval = ctr_comm_get_config(ids[i], "interval");
         if (cloud_interval > 0.0) 
         {
-            boxes[i]->interval = (int)(cloud_interval * 60); 
+            // MODO DEMO: Pega o valor direto em minutos, sem multiplicar por 60
+            boxes[i]->interval = (int)cloud_interval; 
         } 
         else 
         {
-            boxes[i]->interval = 3;
+            boxes[i]->interval = 3; // Valor padrão de fallback (em minutos)
         }
 
+        // Lê o status inicial do botão virtual no Ubidots
         float cloud_start = ctr_comm_get_config(ids[i], "start");
-        if (cloud_start >= 0.0) 
+        if (cloud_start == 1.0) 
         {
-            boxes[i]->next_dose_time = (int)(cloud_start * 60); 
+            boxes[i]->is_active = true;
+            boxes[i]->next_dose_time = current_time + boxes[i]->interval; 
         } 
-        else 
-        {
-            boxes[i]->next_dose_time = current_time + 2; 
-        }
 
         boxes[i]->early_alert_sent = false;
         boxes[i]->exact_alert_sent = false;
@@ -73,15 +78,21 @@ void app_monitor_init(void)
         boxes[i]->message_pending = false;
         boxes[i]->state_to_send = false;
 
-        Serial.printf("[APP_MONITOR] Caixa %d -> Intervalo: %d min | Primeira dose no minuto: %d do dia\n", 
-                      i + 1, boxes[i]->interval, boxes[i]->next_dose_time);
+        Serial.printf("[APP_MONITOR] Caixa %d -> Intervalo: %d min | Status Ativa: %d\n", 
+                      i + 1, boxes[i]->interval, boxes[i]->is_active);
     }
     
     Serial.println("[APP_MONITOR] Todos os compartimentos configurados via nuvem.");
 }
 
-void app_monitor_sync_interval_changes(box_compartment_t compartment)
+void app_monitor_sync_cloud(box_compartment_t compartment)
 {
+    /*// Proteção de tempo para evitar estouro de requisições HTTP no Ubidots
+    if ((millis() - last_cloud_sync) < CLOUD_SYNC_INTERVAL_MS) {
+        return; 
+    }
+    last_cloud_sync = millis();*/
+
     compartment_monitor_t* box = NULL;
     switch (compartment) 
     {
@@ -92,24 +103,50 @@ void app_monitor_sync_interval_changes(box_compartment_t compartment)
         default: return;
     }
 
-    float cloud_interval_hours = ctr_comm_get_config(compartment, "interval");
+    // 1. SINCRONIZA O BOTÃO VIRTUAL START (LIGA/DESLIGA)
+    float cloud_start = ctr_comm_get_config(compartment, "start");
     
-    if (cloud_interval_hours > 0.0)
+    if (cloud_start == 1.0 && !box->is_active) 
     {
-        int cloud_interval_minutes = (int)(cloud_interval_hours * 60);
+        box->is_active = true;
+        box->next_dose_time = ctr_time_get_total_minutes(); // Primeira dose imediata ao ligar
+        
+        box->early_alert_sent = false;
+        box->exact_alert_sent = false;
+        box->late_alert_sent = false;
+        
+        Serial.printf("[APP_MONITOR] Caixa %d ATIVADA! Primeira dose agendada para agora.\n", (int)compartment + 1);
+    }
+    else if (cloud_start == 0.0 && box->is_active) 
+    {
+        box->is_active = false;
+        ctr_clear_r_g_led(compartment); // Limpa alertas luminosos ativos ao desligar
+        Serial.printf("[APP_MONITOR] Caixa %d DESATIVADA pelo usuario.\n", (int)compartment + 1);
+    }
 
-        if (cloud_interval_minutes != box->interval)
+    // 2. SINCRONIZA O INTERVALO (Apenas se a caixa estiver ativa)
+    if (box->is_active)
+    {
+        float cloud_interval_hours = ctr_comm_get_config(compartment, "interval");
+        if (cloud_interval_hours > 0.0)
         {
-            Serial.printf("[APP_MONITOR] Novo intervalo detectado para caixa %d: %d min\n", 
-                          (int)compartment + 1, cloud_interval_minutes);
-            
-            int diferenca = cloud_interval_minutes - box->interval;
-            box->interval = cloud_interval_minutes;
-            box->next_dose_time += diferenca; 
-            
-            box->early_alert_sent = false;
-            box->exact_alert_sent = false;
-            box->late_alert_sent = false;
+            // MODO DEMO: Recebe o valor direto em minutos sem multiplicar por 60
+            int cloud_interval_minutes = (int)cloud_interval_hours;
+
+            if (cloud_interval_minutes != box->interval)
+            {
+                Serial.printf("[APP_MONITOR] Novo intervalo detectado para caixa %d: %d min\n", 
+                              (int)compartment + 1, cloud_interval_minutes);
+                
+                int diferenca = cloud_interval_minutes - box->interval;
+                box->interval = cloud_interval_minutes;
+                box->next_dose_time += diferenca; 
+                
+                // Reseta as flags de controle para o novo agendamento
+                box->early_alert_sent = false;
+                box->exact_alert_sent = false;
+                box->late_alert_sent = false;
+            }
         }
     }
 }
@@ -124,6 +161,11 @@ void app_monitor_check_alerts(box_compartment_t compartment, int current_time)
         case COMPARTMENT_3: box = &compartment_3; break;
         case COMPARTMENT_4: box = &compartment_4; break;
         default: return;
+    }
+
+    // Se a caixa estiver inativa, não gera alertas nem aciona atuadores
+    if (!box->is_active) {
+        return;
     }
 
     if (current_time == (box->next_dose_time - ANTECEDENT_TIME) && !box->early_alert_sent) 
@@ -157,6 +199,10 @@ void app_monitor_evaluate_schedule(box_compartment_t compartment, int current_ti
         case COMPARTMENT_3: box = &compartment_3; break;
         case COMPARTMENT_4: box = &compartment_4; break;
         default: return;
+    }
+
+    if (!box->is_active) {
+        return;
     }
 
     if (current_time > (box->next_dose_time + EXCESS_TIME)) 
@@ -195,15 +241,19 @@ void app_monitor_check_box(box_compartment_t compartment)
     {
         case 1: // OPEN
             Serial.printf("[APP_MONITOR] Caixa %d ABERTA no minuto: %d\n", (int)compartment + 1, current_time);
-            app_monitor_evaluate_schedule(compartment, current_time);
             
-            box->next_dose_time = current_time + box->interval;
-            
-            box->early_alert_sent = false;
-            box->exact_alert_sent = false;
-            box->late_alert_sent = false;
-            
-            Serial.printf("[APP_MONITOR] Caixa %d reagendada automaticamente para o minuto: %d\n", (int)compartment + 1, box->next_dose_time);
+            // Só altera cronograma e rotinas internas se o monitoramento estiver ativo
+            if (box->is_active) 
+            {
+                app_monitor_evaluate_schedule(compartment, current_time);
+                
+                box->next_dose_time = current_time + box->interval;
+                box->early_alert_sent = false;
+                box->exact_alert_sent = false;
+                box->late_alert_sent = false;
+                
+                Serial.printf("[APP_MONITOR] Caixa %d reagendada automaticamente para o minuto: %d\n", (int)compartment + 1, box->next_dose_time);
+            }
             break;
 
         case 0: // CLOSED
@@ -241,5 +291,5 @@ void app_monitor_task(void)
 {
     app_monitor_check_box(COMPARTMENT_1);
     app_monitor_send_messages(COMPARTMENT_1);
-    app_monitor_sync_interval_changes(COMPARTMENT_1);
+    app_monitor_sync_cloud(COMPARTMENT_1); 
 }
