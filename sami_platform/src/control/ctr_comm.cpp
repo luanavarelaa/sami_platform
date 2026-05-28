@@ -170,3 +170,8 @@ bool ctr_comm_send_next_dose_time(box_compartment_t compartment, float time_valu
     
     return (httpCode == 200 || httpCode == 201);
 }
+
+bool ctr_comm_is_connected(void) 
+{
+    return drv_wifi_is_connected(); 
+}
