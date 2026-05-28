@@ -13,6 +13,6 @@ void setup()
 
 void loop() 
 {
-  app_monitor_task();
+  app_sami_run();
 }
 

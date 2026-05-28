@@ -3,7 +3,7 @@
 
 #include "sami_types.h"
 
-void ctr_time_init();
+bool ctr_time_init();
 
 int ctr_time_get_total_minutes();
 

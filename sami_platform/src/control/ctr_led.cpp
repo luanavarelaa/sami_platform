@@ -57,3 +57,8 @@ void ctr_clear_r_g_led(box_compartment_t compartment)
     break;
   }
 }
+
+void ctr_set_led (gpio_name_t compartment)
+{
+  drv_gpio_set_pin(compartment);
+}

@@ -4,21 +4,30 @@
 #include <time.h>
 #include "ctr_time.h"
 
-void ctr_time_init() 
+bool ctr_time_init() 
 {
     // Sincroniza com o servidor NTP (Brasília: -3h)
     configTime(-10800, 0, "pool.ntp.org", "time.nist.gov");
     Serial.println("\n[CTR_TIME] Sincronizando hora...");
 
     time_t now = time(nullptr);
-    while (now < 1704067200) 
+    int tentativas = 0;
+    
+    while (now < 1704067200 && tentativas < 20) 
     { 
         delay(500);
         Serial.print(".");
         now = time(nullptr);
+        tentativas++;
+    }
+    
+    if (now < 1704067200) {
+        Serial.println("\n[CTR_TIME] Falha ao sincronizar a hora.");
+        return false;
     }
     
     Serial.println("\n[CTR_TIME] Hora sincronizada com sucesso!");
+    return true;
 }
 
 int ctr_time_get_total_minutes() 
