@@ -17,7 +17,7 @@
 #define NOT_TOOK_ON_TIME    3
 
 // Sincroniza com a nuvem a cada 10 segundos para não travar a placa
-#define CLOUD_SYNC_INTERVAL_MS 10000 
+#define CLOUD_SYNC_INTERVAL_MS 100 
 
 static unsigned long next_dose_time = 0;
 
@@ -305,5 +305,11 @@ void app_monitor_task(void)
 {
     app_monitor_check_box(COMPARTMENT_1);
     app_monitor_send_messages(COMPARTMENT_1);
-    app_monitor_sync_cloud(COMPARTMENT_1); 
+    
+    static unsigned long last_sync_time = 0;
+    if (millis() - last_sync_time >= CLOUD_SYNC_INTERVAL_MS) 
+    {
+        app_monitor_sync_cloud(COMPARTMENT_1); 
+        last_sync_time = millis();
+    } 
 }
