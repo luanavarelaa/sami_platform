@@ -1,4 +1,3 @@
-// src/driver/drv_gpio.cpp
 // ================= INCLUDES =================
 #include <stdint.h>
 #include <stdbool.h>
@@ -13,16 +12,12 @@
 #define YELLOW_LED_PIN      D4
 
 // ================= TYPEDEFS & STRUCTS =================
-// (Vazio)
 
 // ================= LOCAL VARIABLES =================
-// (Vazio)
 
 // ================= LOCAL FUNCTION PROTOTYPES =================
-// (Vazio)
 
 // ================= LOCAL FUNCTIONS =================
-// (Vazio)
 
 // ================= GLOBAL FUNCTIONS =================
 void drv_gpio_out_config(gpio_name_t pin)

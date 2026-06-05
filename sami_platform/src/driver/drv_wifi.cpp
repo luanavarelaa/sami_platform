@@ -6,19 +6,14 @@
 #include "drv_wifi.h"
 
 // ================= DEFINES =================
-// (Vazio)
 
 // ================= TYPEDEFS & STRUCTS =================
-// (Vazio)
 
 // ================= LOCAL VARIABLES =================
-// (Vazio)
 
 // ================= LOCAL FUNCTION PROTOTYPES =================
-// (Vazio)
 
 // ================= LOCAL FUNCTIONS =================
-// (Vazio)
 
 // ================= GLOBAL FUNCTIONS =================
 void drv_wifi_init(const char* ssid, const char* password) 

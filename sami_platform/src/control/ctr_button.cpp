@@ -1,4 +1,3 @@
-// src/control/ctr_button.cpp
 // ================= INCLUDES =================
 #include <stdint.h>
 #include <stdbool.h>
@@ -22,10 +21,8 @@ typedef struct
 static button_state_t btn_states[4];
 
 // ================= LOCAL FUNCTION PROTOTYPES =================
-// (Vazio)
 
 // ================= LOCAL FUNCTIONS =================
-// (Vazio)
 
 // ================= GLOBAL FUNCTIONS =================
 void ctr_button_init(void)

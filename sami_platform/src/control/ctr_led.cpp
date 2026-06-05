@@ -7,19 +7,14 @@
 #include "sami_types.h"
 
 // ================= DEFINES =================
-// (Vazio)
 
 // ================= TYPEDEFS & STRUCTS =================
-// (Vazio)
 
 // ================= LOCAL VARIABLES =================
-// (Vazio)
 
 // ================= LOCAL FUNCTION PROTOTYPES =================
-// (Vazio)
 
 // ================= LOCAL FUNCTIONS =================
-// (Vazio)
 
 // ================= GLOBAL FUNCTIONS =================
 void ctr_led_init(void)
