@@ -1,78 +1,61 @@
+// ================= INCLUDES =================
 #include <Arduino.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
 #include <stdbool.h>
 #include <stdint.h>
-
 #include "ctr_comm.h"
 #include "drv_wifi.h" 
 #include "drv_gpio.h"
 #include "sami_types.h"
 
-const char* wifi_ssid = "S23deLuana";
-const char* wifi_pass = "docedeleite";
-const String token = "BBUS-vf6GrNx5DO6JkmhJdkz3Ub8IQsaDOx"; 
+// ================= DEFINES =================
+#define UBIDOTS_URL "http://industrial.api.ubidots.com/api/v1.6/devices/sami"
 
+// ================= TYPEDEFS & STRUCTS =================
+// (Vazio)
+
+// ================= LOCAL VARIABLES =================
+static const char* wifi_ssid = "S23deLuana";
+static const char* wifi_pass = "docedeleite";
+static const String token = "BBUS-vf6GrNx5DO6JkmhJdkz3Ub8IQsaDOx"; 
+
+// ================= LOCAL FUNCTION PROTOTYPES =================
+// (Vazio)
+
+// ================= LOCAL FUNCTIONS =================
+// (Vazio)
+
+// ================= GLOBAL FUNCTIONS =================
 bool ctr_comm_init(void) 
 {
-    Serial.println("\n[CTR_COMM] Inicializando comunicações...");
-
+    Serial.println("\n[CTR_COMM] Initializing communications...");
     drv_wifi_init(wifi_ssid, wifi_pass);
-    
-    if (drv_wifi_is_connected())
-    {
-        return true;
-    }
-
-    return false;
+    return drv_wifi_is_connected();
 }
 
 bool ctr_comm_send_data(box_compartment_t compartment, bool compartment_open) 
 {
-    if (!drv_wifi_is_connected()) 
-    {
-        return false; 
-    }
+    if (!drv_wifi_is_connected()) return false; 
 
     String variable_name;
-    
     switch (compartment) 
     {
-
-        case COMPARTMENT_1: 
-            variable_name = "compartment_1";
-            break;
-
-        case COMPARTMENT_2:
-            variable_name = "compartment_2";
-            break;
-
-        case COMPARTMENT_3:
-            variable_name = "compartment_3";
-            break;
-
-        case COMPARTMENT_4:
-            variable_name = "compartment_4";
-            break;
-
+        case COMPARTMENT_1: variable_name = "compartment_1"; break;
+        case COMPARTMENT_2: variable_name = "compartment_2"; break;
+        case COMPARTMENT_3: variable_name = "compartment_3"; break;
+        case COMPARTMENT_4: variable_name = "compartment_4"; break;
         default:
             Serial.println("\n[CTR_COMM] Error: Unknown compartment.");
             return false;
     }
 
-    String payload;
-    if (compartment_open) 
-    {
-        payload = "{\"" + variable_name + "\": 1}"; 
-    } else {
-        payload = "{\"" + variable_name + "\": 0}";
-    }
+    String payload = compartment_open ? "{\"" + variable_name + "\": 1}" : "{\"" + variable_name + "\": 0}";
 
     WiFiClient client;
     HTTPClient http;
-    String url = "http://industrial.api.ubidots.com/api/v1.6/devices/sami";
     
-    http.begin(client, url);
+    http.begin(client, UBIDOTS_URL);
     http.addHeader("Content-Type", "application/json");
     http.addHeader("X-Auth-Token", token);
     
@@ -91,20 +74,15 @@ bool ctr_comm_send_data(box_compartment_t compartment, bool compartment_open)
 
 bool ctr_comm_send_alert(box_compartment_t compartment, int alert_code) 
 {
-    if (!drv_wifi_is_connected()) 
-    { 
-        return false; 
-    }
-
+    if (!drv_wifi_is_connected()) return false; 
     
     String variable_name = "alert_status_" + String((int)compartment + 1);
     String payload = "{\"" + variable_name + "\": " + String(alert_code) + "}";
 
     WiFiClient client;
     HTTPClient http;
-    String url = "http://industrial.api.ubidots.com/api/v1.6/devices/sami";
     
-    http.begin(client, url);
+    http.begin(client, UBIDOTS_URL);
     http.addHeader("Content-Type", "application/json");
     http.addHeader("X-Auth-Token", token);
     
@@ -116,16 +94,13 @@ bool ctr_comm_send_alert(box_compartment_t compartment, int alert_code)
 
 float ctr_comm_get_config(box_compartment_t compartment, String type) 
 {
-    if (!drv_wifi_is_connected()) 
-    {
-        return -1.0;
-    }
+    if (!drv_wifi_is_connected()) return -1.0;
 
     WiFiClient client;
     HTTPClient http;
     
     String variable_name = type + "_" + String((int)compartment + 1);
-    String url = "http://industrial.api.ubidots.com/api/v1.6/devices/sami/" + variable_name + "/lv";
+    String url = String(UBIDOTS_URL) + "/" + variable_name + "/lv";
     
     http.begin(client, url);
     http.addHeader("X-Auth-Token", token);
@@ -140,7 +115,7 @@ float ctr_comm_get_config(box_compartment_t compartment, String type)
     }
     else 
     {
-        Serial.printf("\n[CTR_COMM] Falha ao ler %s no Ubidots. Erro HTTP: %d\n", variable_name.c_str(), httpCode);
+        Serial.printf("\n[CTR_COMM] Failed to read %s from Ubidots. HTTP Error: %d\n", variable_name.c_str(), httpCode);
     }
     
     http.end();
@@ -153,15 +128,12 @@ bool ctr_comm_send_next_dose_time(box_compartment_t compartment, float time_valu
     if (!drv_wifi_is_connected()) return false; 
 
     String variable_name = "time_dose_" + String((int)compartment + 1);
-    
-    // Envia o valor decimal diretamente
     String payload = "{\"" + variable_name + "\": " + String(time_value) + "}";
 
     WiFiClient client;
     HTTPClient http;
-    String url = "http://industrial.api.ubidots.com/api/v1.6/devices/sami";
     
-    http.begin(client, url);
+    http.begin(client, UBIDOTS_URL);
     http.addHeader("Content-Type", "application/json");
     http.addHeader("X-Auth-Token", token);
     
@@ -169,4 +141,9 @@ bool ctr_comm_send_next_dose_time(box_compartment_t compartment, float time_valu
     http.end();
     
     return (httpCode == 200 || httpCode == 201);
+}
+
+bool ctr_comm_is_connected(void) 
+{
+    return drv_wifi_is_connected(); 
 }

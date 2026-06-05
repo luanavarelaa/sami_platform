@@ -1,7 +1,8 @@
-#ifndef APP_SAMI_H  
+#ifndef APP_SAMI_H
 #define APP_SAMI_H
 
-void app_sami_init (void);
-
+// ================= GLOBAL FUNCTIONS =================
+void app_sami_init(void);
 void app_sami_run(void);
-#endif /* APP_SAMI_H */
+
+#endif // APP_SAMI_H

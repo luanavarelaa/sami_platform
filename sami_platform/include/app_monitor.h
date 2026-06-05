@@ -3,18 +3,9 @@
 
 #include "sami_types.h"
 
+// ================= GLOBAL FUNCTIONS =================
 void app_monitor_init(void);
-
 void app_monitor_task(void);
+void app_monitor_update_from_cloud(box_compartment_t compartment, bool is_active, int new_interval);
 
-void app_monitor_check_alerts(int current_time);
-
-void app_monitor_evaluate_schedule(int current_time);
-
-void app_monitor_check_box(void);
-
-void app_monitor_send_messages(void);
-
-void app_monitor_update_dose_time(box_compartment_t compartment, int total_minutes);
-
-#endif
+#endif // APP_MONITOR_H

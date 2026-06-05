@@ -1,3 +1,5 @@
+// src/control/ctr_button.cpp
+// ================= INCLUDES =================
 #include <stdint.h>
 #include <stdbool.h>
 #include <Arduino.h>
@@ -5,8 +7,10 @@
 #include "drv_gpio.h"
 #include "sami_types.h"
 
+// ================= DEFINES =================
 #define DEBOUNCE_DELAY_MS 20
 
+// ================= TYPEDEFS & STRUCTS =================
 typedef struct 
 {
     bool debounced_state;
@@ -14,8 +18,16 @@ typedef struct
     unsigned long last_change_time;
 } button_state_t;
 
+// ================= LOCAL VARIABLES =================
 static button_state_t btn_states[4];
 
+// ================= LOCAL FUNCTION PROTOTYPES =================
+// (Vazio)
+
+// ================= LOCAL FUNCTIONS =================
+// (Vazio)
+
+// ================= GLOBAL FUNCTIONS =================
 void ctr_button_init(void)
 {
     drv_gpio_in_config(GPIO_BUTTON_1);
@@ -36,9 +48,8 @@ bool ctr_check_compartment_is_open(box_compartment_t compartment)
     switch (compartment)
     {
         case COMPARTMENT_1:
-            current_reading = (drv_gpio_get_state_pin(GPIO_BUTTON_1) == OPEN);
+            current_reading = (drv_gpio_get_state_pin(GPIO_BUTTON_1) == 1); // 1 = OPEN
             break;
-
         default:
             return false;
     }
