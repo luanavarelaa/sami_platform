@@ -13,7 +13,6 @@
 #define UBIDOTS_URL "http://industrial.api.ubidots.com/api/v1.6/devices/sami"
 
 // ================= TYPEDEFS & STRUCTS =================
-// (Vazio)
 
 // ================= LOCAL VARIABLES =================
 static const char* wifi_ssid = "S23deLuana";
@@ -21,10 +20,8 @@ static const char* wifi_pass = "docedeleite";
 static const String token = "BBUS-vf6GrNx5DO6JkmhJdkz3Ub8IQsaDOx"; 
 
 // ================= LOCAL FUNCTION PROTOTYPES =================
-// (Vazio)
 
 // ================= LOCAL FUNCTIONS =================
-// (Vazio)
 
 // ================= GLOBAL FUNCTIONS =================
 bool ctr_comm_init(void) 

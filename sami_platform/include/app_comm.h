@@ -3,7 +3,6 @@
 
 #include "sami_types.h"
 
-// Tipos de eventos que o monitor pode despachar
 typedef enum {
     EVENT_BOX_OPEN,
     EVENT_DOSE_TIME,

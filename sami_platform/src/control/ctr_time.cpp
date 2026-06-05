@@ -10,16 +10,12 @@
 #define MAX_SYNC_ATTEMPTS 20
 
 // ================= TYPEDEFS & STRUCTS =================
-// (Vazio)
 
 // ================= LOCAL VARIABLES =================
-// (Vazio)
 
 // ================= LOCAL FUNCTION PROTOTYPES =================
-// (Vazio)
 
 // ================= LOCAL FUNCTIONS =================
-// (Vazio)
 
 // ================= GLOBAL FUNCTIONS =================
 bool ctr_time_init() 

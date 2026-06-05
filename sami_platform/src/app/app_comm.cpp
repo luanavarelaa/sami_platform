@@ -8,7 +8,7 @@
 // ================= DEFINES =================
 #define OFFLINE_BUFFER_SIZE     20
 #define CLOUD_SYNC_INTERVAL_MS  5000
-#define UBI_RATE_LIMIT_MS       1000 // 1 segundo de intervalo entre envios
+#define UBI_RATE_LIMIT_MS       1000 
 
 // ================= TYPEDEFS & STRUCTS =================
 typedef struct 
@@ -16,7 +16,7 @@ typedef struct
     box_compartment_t compartment;
     event_type_t type;
     float value;
-    int timestamp; // Timestamp em minutos 
+    int timestamp; 
 } offline_event_t;
 
 // ================= LOCAL VARIABLES =================
@@ -42,7 +42,6 @@ static bool app_comm_dispatch_to_cloud(offline_event_t event)
     switch (event.type) 
     {
         case EVENT_BOX_OPEN:
-            // Converte o float de volta para booleano
             success = ctr_comm_send_data(event.compartment, (event.value > 0.0f));
             break;
             
@@ -51,7 +50,6 @@ static bool app_comm_dispatch_to_cloud(offline_event_t event)
             break;
             
         case EVENT_ALERT:
-            // Converte o float para inteiro do código de alerta
             success = ctr_comm_send_alert(event.compartment, (int)event.value);
             break;
     }
